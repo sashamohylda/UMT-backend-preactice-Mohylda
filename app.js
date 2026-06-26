@@ -4,36 +4,42 @@ import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 import config from "./envConfigs.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { noCache } from "./middlewares/noCache.js";
 import { notFoundHandler } from "./middlewares/notFound.js";
-import { feedbacksRouter, bouquetsRouter, ordersRouter, bestsellersRouter } from "./routes/api/index.js";
+import { feedbackRouter, bouquetRouter, orderRouter, bestsellerRouter } from "./routes/api/index.js";
 import swaggerDocument from "./swagger.json" with { type: "json" };
 
 const app = express();
+
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
 const loggerFormat = app.get("env") === "development" ? "dev" : "short";
 
 app.use(morgan(loggerFormat));
 app.use(
-    cors({
-        origin(origin, callback) {
-            if (!origin || config.corsOrigin?.includes(origin)) {
-                callback(null, true);
-                return;
-            }
-            callback(new Error(`Cors: origin ${origin} is not allowed`));
-        },
-        credentials: true,
-    })
+  cors({
+    origin(origin, callback) {
+      if (!origin || config.corsOrigin?.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`Cors: origin ${origin} is not allowed`));
+    },
+    credentials: true,
+  })
 );
 
 app.use(express.json());
+app.use("/api", noCache);
 app.use(express.static("public"));
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-app.use("/api/feedbacks", feedbacksRouter);
-app.use("/api/bouquets", bouquetsRouter);
-app.use("/api/orders", ordersRouter);
-app.use("/api/bestsellers", bestsellersRouter);
+app.use("/api/feedbacks", feedbackRouter);
+app.use("/api/bouquets", bouquetRouter);
+app.use("/api/orders", orderRouter);
+app.use("/api/bestsellers", bestsellerRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

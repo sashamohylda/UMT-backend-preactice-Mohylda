@@ -1,23 +1,32 @@
-import { loadDb, saveDb } from "../helpers/jsonDb.js";
+import prisma from "../helpers/prisma.js";
 
-export function create(orderPayload) {
-    const db = loadDb();
+export async function findAll() {
+    return prisma.order.findMany({
+        orderBy: { id: "asc" },
+    });
+}
 
-    if (!Array.isArray(db.orders)) {
-        db.orders = [];
-    }
+export async function findById(id) {
+    return prisma.order.findUnique({
+        where: { id },
+    });
+}
 
-    const nextId = db.orders.reduce((maxId, order) => Math.max(maxId, Number(order.id) || 0), 0) + 1;
+export async function create(orderPayload) {
+    return prisma.order.create({
+        data: orderPayload,
+    });
+}
 
-    const order = {
-        id: nextId,
-        ...orderPayload,
-        createdAt: new Date().toISOString(),
-    };
+export async function update(id, data) {
+    return prisma.order.update({
+        where: { id },
+        data,
+    });
+}
 
-    db.orders.push(order);
-
-    saveDb(db);
-
-    return order;
+export async function remove(id) {
+    return prisma.order.delete({
+        where: { id },
+    });
 }

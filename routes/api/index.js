@@ -1,4 +1,4 @@
-export { default as feedbacksRouter } from "./feedbacksRouter.js";
-export { default as bouquetsRouter } from "./bouquetsRouter.js";
-export { default as ordersRouter } from "./ordersRouter.js";
-export { default as bestsellersRouter } from "./bestsellersRouter.js";
+export { default as feedbackRouter } from "./feedbackRouter.js";
+export { default as bouquetRouter } from "./bouquetRouter.js";
+export { default as orderRouter } from "./orderRouter.js";
+export { default as bestsellerRouter } from "./bestsellerRouter.js";

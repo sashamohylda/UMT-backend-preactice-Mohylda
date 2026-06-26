@@ -1,120 +1,375 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "UMT Bouquets API",
-        "version": "1.0.0",
-        "description": "Backend API for the bouquets catalogue frontend"
-    },
-    "servers": [
-        {
-            "url": "http://localhost:3001",
-            "description": "Local development"
-        }
-    ],
-    "paths": {
-        "/api/bouquets": {
-            "get": {
-                "summary": "Get paginated bouquet list",
-                "tags": [
-                    "Bouquets"
-                ],
-                "parameters": [
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "default": 1
-                        }
-                    },
-                    {
-                        "name": "per-page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 100,
-                            "default": 12
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Paginated bouquet list with data and meta"
-                    }
-                }
-            }
-        },
-        "/api/feedbacks": {
-            "get": {
-                "summary": "Get all feedbacks",
-                "tags": [
-                    "Feedbacks"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Array of feedback items"
-                    }
-                }
-            }
-        },
-        "/api/orders": {
-            "post": {
-                "summary": "Create a new order",
-                "tags": [
-                    "Orders"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "name",
-                                    "phone",
-                                    "address"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Ann"
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "+1 (555) 123-4567"
-                                    },
-                                    "address": {
-                                        "type": "string",
-                                        "example": "456 Floral Ave, Sydney NSW 2000 AU"
-                                    },
-                                    "comment": {
-                                        "type": "string",
-                                        "example": "Type your message..."
-                                    },
-                                    "productId": {
-                                        "type": [
-                                            "integer",
-                                            "null"
-                                        ],
-                                        "example": 1,
-                                        "description": "Product id when ordering from catalogue; null for general orders"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Order created"
-                    },
-                    "400": {
-                        "description": "Validation error"
-                    }
-                }
-            }
-        }
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Flora API",
+    "version": "1.0.0",
+    "description": "Backend API for the Flora bouquets catalogue frontend"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Local development"
     }
+  ],
+  "paths": {
+    "/api/bouquets": {
+      "get": {
+        "summary": "Get paginated bouquet list",
+        "description": "Returns one page of bouquets from the database. Use `page` and `per-page` to control pagination.",
+        "tags": ["Bouquet"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PerPageParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated bouquet list with data and meta",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PaginatedBouquetResponse" },
+                "example": {
+                  "data": [
+                    {
+                      "id": "1",
+                      "img": "https://res.cloudinary.com/example/image.png",
+                      "title": "Peach Meadow",
+                      "desc": "A soft and radiant arrangement of peach and blush roses.",
+                      "price": 55
+                    }
+                  ],
+                  "meta": {
+                    "first": 1,
+                    "prev": null,
+                    "next": 2,
+                    "last": 9,
+                    "pages": 9,
+                    "items": 101
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a bouquet",
+        "tags": ["Bouquet"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "img": { "type": "string", "format": "binary", "description": "Image file (max 6 MB)" },
+                  "title": { "type": "string", "example": "Peach Meadow" },
+                  "desc": { "type": "string", "example": "A soft and radiant arrangement." },
+                  "price": { "type": "integer", "example": 55 }
+                },
+                "required": ["img", "title", "desc", "price"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Bouquet created" },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/api/bouquets/{id}": {
+      "get": {
+        "summary": "Get bouquet by id",
+        "tags": ["Bouquet"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "responses": {
+          "200": { "description": "Bouquet item" },
+          "404": { "description": "Bouquet not found" }
+        }
+      },
+      "patch": {
+        "summary": "Partially update bouquet by id",
+        "tags": ["Bouquet"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "img": { "type": "string", "format": "binary", "description": "New image file (max 6 MB)" },
+                  "title": { "type": "string" },
+                  "desc": { "type": "string" },
+                  "price": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Bouquet updated" },
+          "400": { "description": "Validation error" },
+          "404": { "description": "Bouquet not found" }
+        }
+      },
+      "delete": {
+        "summary": "Delete bouquet by id",
+        "tags": ["Bouquet"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "responses": {
+          "200": { "description": "Bouquet deleted" },
+          "404": { "description": "Bouquet not found" }
+        }
+      }
+    },
+    "/api/feedbacks": {
+      "get": {
+        "summary": "Get all feedback",
+        "tags": ["Feedback"],
+        "responses": {
+          "200": { "description": "Array of feedback items" }
+        }
+      },
+      "post": {
+        "summary": "Create feedback",
+        "tags": ["Feedback"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FeedbackInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Feedback created" },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/api/feedbacks/{id}": {
+      "get": {
+        "summary": "Get feedback by id",
+        "tags": ["Feedback"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "responses": {
+          "200": { "description": "Feedback item" },
+          "404": { "description": "Feedback not found" }
+        }
+      },
+      "patch": {
+        "summary": "Partially update feedback by id",
+        "tags": ["Feedback"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FeedbackUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Feedback updated" },
+          "400": { "description": "Validation error" },
+          "404": { "description": "Feedback not found" }
+        }
+      },
+      "delete": {
+        "summary": "Delete feedback by id",
+        "tags": ["Feedback"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "responses": {
+          "200": { "description": "Feedback deleted" },
+          "404": { "description": "Feedback not found" }
+        }
+      }
+    },
+    "/api/orders": {
+      "get": {
+        "summary": "Get all orders",
+        "tags": ["Order"],
+        "responses": {
+          "200": { "description": "Array of order items" }
+        }
+      },
+      "post": {
+        "summary": "Create a new order",
+        "tags": ["Order"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrderInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Order created" },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/api/orders/{id}": {
+      "get": {
+        "summary": "Get order by id",
+        "tags": ["Order"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "responses": {
+          "200": { "description": "Order item" },
+          "404": { "description": "Order not found" }
+        }
+      },
+      "patch": {
+        "summary": "Partially update order by id",
+        "tags": ["Order"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrderUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Order updated" },
+          "400": { "description": "Validation error" },
+          "404": { "description": "Order not found" }
+        }
+      },
+      "delete": {
+        "summary": "Delete order by id",
+        "tags": ["Order"],
+        "parameters": [ { "$ref": "#/components/parameters/IdParam" } ],
+        "responses": {
+          "200": { "description": "Order deleted" },
+          "404": { "description": "Order not found" }
+        }
+      }
+    },
+    "/api/bestsellers": {
+      "get": {
+        "summary": "Get all bestsellers",
+        "tags": ["Bestseller"],
+        "responses": {
+          "200": { "description": "Array of bestseller items" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "IdParam": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "integer", "minimum": 1 },
+        "description": "Resource id"
+      },
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "description": "Page number (1-based)",
+        "schema": { "type": "integer", "minimum": 1, "default": 1, "example": 1 }
+      },
+      "PerPageParam": {
+        "name": "per-page",
+        "in": "query",
+        "required": false,
+        "description": "Number of items per page",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 12, "example": 12 }
+      }
+    },
+    "schemas": {
+      "Bouquet": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "1" },
+          "img": { "type": "string", "format": "uri", "example": "https://res.cloudinary.com/example/image.png" },
+          "title": { "type": "string" },
+          "desc": { "type": "string" },
+          "price": { "type": "integer", "example": 55 }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "first": { "type": "integer", "example": 1 },
+          "prev": { "type": ["integer", "null"], "example": null },
+          "next": { "type": ["integer", "null"], "example": 2 },
+          "last": { "type": "integer", "example": 9 },
+          "pages": { "type": "integer", "example": 9 },
+          "items": { "type": "integer", "example": 101, "description": "Total number of bouquets" }
+        }
+      },
+      "PaginatedBouquetResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Bouquet" } },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "BouquetInput": {
+        "type": "object",
+        "required": ["img", "title", "desc", "price"],
+        "properties": {
+          "img": { "type": "string", "format": "binary" },
+          "title": { "type": "string", "example": "Peach Meadow" },
+          "desc": { "type": "string", "example": "A soft and radiant arrangement." },
+          "price": { "type": "integer", "example": 55 }
+        }
+      },
+      "BouquetUpdate": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "img": { "type": "string", "format": "binary" },
+          "title": { "type": "string" },
+          "desc": { "type": "string" },
+          "price": { "type": "integer" }
+        }
+      },
+      "FeedbackInput": {
+        "type": "object",
+        "required": ["text", "author"],
+        "properties": {
+          "text": { "type": "string", "example": "Flora made my anniversary unforgettable!" },
+          "author": { "type": "string", "example": "Emma T." }
+        }
+      },
+      "FeedbackUpdate": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "text": { "type": "string" },
+          "author": { "type": "string" }
+        }
+      },
+      "OrderInput": {
+        "type": "object",
+        "required": ["name", "phone", "address"],
+        "properties": {
+          "name": { "type": "string", "example": "Emma Thompson" },
+          "phone": { "type": "string", "example": "+14155551234" },
+          "address": { "type": "string", "example": "123 Rose Lane, San Francisco, CA" },
+          "comment": { "type": "string", "example": "Please deliver in the morning." },
+          "bouquetId": { "type": ["integer", "null"], "example": 1, "description": "Bouquet id when ordering from catalogue; null for general orders" }
+        }
+      },
+      "OrderUpdate": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "name": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "comment": { "type": "string" },
+          "bouquetId": { "type": ["integer", "null"] }
+        }
+      }
+    }
+  }
 }

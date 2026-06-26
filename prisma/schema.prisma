@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Bouquet {
+  id     Int     @id @default(autoincrement())
+  img    String
+  title  String
+  desc   String
+  price  Int
+  orders Order[]
+}
+
+model Bestseller {
+  id    Int    @id @default(autoincrement())
+  img   String
+  title String
+  desc  String
+  text  String
+  price Int
+}
+
+model Feedback {
+  id     Int    @id @default(autoincrement())
+  text   String
+  author String
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String
+  address   String
+  comment   String   @default("")
+  bouquetId Int?
+  bouquet   Bouquet? @relation(fields: [bouquetId], references: [id])
+  createdAt DateTime @default(now())
+}
